@@ -1,5 +1,5 @@
 %% Run reset if doing nothing before 
-
+Reset
 %% OPENING GRIPPER
 %grip_client = rosactionclient('/gripper_controller/follow_joint_trajectory','control_msgs/FollowJointTrajectory','DataFormat', 'struct')
 
@@ -14,21 +14,21 @@
 % TRAJECTORY 
 trajAct = rosactionclient('/pos_joint_traj_controller/follow_joint_trajectory',...
                           'control_msgs/FollowJointTrajectory',...
-                          'DataFormat', 'struct') 
+                          'DataFormat', 'struct') ;
 
 % instantiate the goal
-trajGoal = rosmessage(trajAct)
+trajGoal = rosmessage(trajAct);
 
 trajAct.FeedbackFcn = []; 
 
 % Joint subscriber
-jointSub = rossubscriber("/joint_states")
+jointSub = rossubscriber("/joint_states");
 
-jointStateMsg = jointSub.LatestMessage
+jointStateMsg = jointSub.LatestMessage;
 
 
 % Loading robot
-UR5e = loadrobot('universalUR5e', DataFormat="row")
+UR5e = loadrobot('universalUR5e', DataFormat="row");
 
 tform=UR5e.Bodies{3}.Joint.JointToParentTransform;    
 UR5e.Bodies{3}.Joint.setFixedTransform(tform*eul2tform([pi/2,0,0]));
@@ -46,12 +46,12 @@ ik = inverseKinematics("RigidBodyTree",UR5e);
 ikWeights = [0.25 0.25 0.25 0.1 0.1 .1];
 
 % receive current robot configuration
-jointStateMsg = receive(jointSub,3) 
+jointStateMsg = receive(jointSub,3) ;
 
-initialIKGuess = homeConfiguration(UR5e)
+initialIKGuess = homeConfiguration(UR5e);
 
 % order of the names
-jointStateMsg.Name
+jointStateMsg.Name;
 
 % updated config
 initialIKGuess(1) = jointStateMsg.Position(4);  % Shoulder Pan
@@ -60,11 +60,11 @@ initialIKGuess(3) = jointStateMsg.Position(1);  % Elbow
 initialIKGuess(4) = jointStateMsg.Position(5);  % W1
 initialIKGuess(5) = jointStateMsg.Position(6);  % W2
 initialIKGuess(6) = jointStateMsg.Position(7);  % W3
-show(UR5e,initialIKGuess)
+show(UR5e,initialIKGuess);
 
 % positions and translation
 gripperX = 0.8;
-gripperY = -0.04;
+gripperY = -0.035;
 gripperZ = 0.13;
 
 gripperTranslation = [gripperY gripperX gripperZ];
@@ -76,22 +76,23 @@ tform(1:3,4) = gripperTranslation'; % set translation in homogeneous transform
 
 
 % Compute the IKs
-[configSoln, solnInfo] = ik('tool0',tform,ikWeights,initialIKGuess)
+[configSoln, solnInfo] = ik('tool0',tform,ikWeights,initialIKGuess);
 
 UR5econfig = [configSoln(3)... 
               configSoln(2)...
               configSoln(1)...
               configSoln(4)...
               configSoln(5)...
-              configSoln(6)]
+              configSoln(6)];
 
 % fill names and positions
-trajGoal = packTrajGoal(UR5econfig,trajGoal)
+trajGoal = packTrajGoal(UR5econfig,trajGoal);
 
 % send
-sendGoal(trajAct,trajGoal)
+sendGoal(trajAct,trajGoal);
 
-
+% Display end position array
+Final_end_effector_position = [gripperTranslation gripperRotation]
 
 
 
